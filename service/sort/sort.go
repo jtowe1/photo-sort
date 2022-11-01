@@ -11,21 +11,27 @@ import (
 	"strconv"
 )
 
-func PhotosByLocalPath(pathToPhotos string) {
-	faceService := faces.NewFaceService()
-	photos, err := os.ReadDir(pathToPhotos)
-	if err != nil {
-		log.Fatal(err)
-	}
-	unsortedPhotos := make([]os.DirEntry, len(photos))
-	copy(unsortedPhotos, photos)
+const AlbumBaseName = "album"
+const SortedFolderName = "sorted"
 
-	albumNameBase := "album"
+type ServiceSort struct {
+	FaceService faces.FaceServiceInterface
+}
+
+func (ss *ServiceSort) PhotosByLocalPath(pathToPhotos string) error {
+	photos, err := validatePath(pathToPhotos)
+	if err != nil {
+		return err
+	}
+
+	unsortedPhotos := make([]os.DirEntry, len(*photos))
+	copy(unsortedPhotos, *photos)
+
 	albumNameIndex := 0
 	albums := make(map[string][]string)
 	var matchedPhotos []string
 
-	for _, photo := range photos {
+	for _, photo := range *photos {
 		pathToPhoto := pathToPhotos + string(os.PathSeparator) + photo.Name()
 		ext := path.Ext(pathToPhoto)
 		if ext != ".jpg" && ext != ".jpeg" {
@@ -51,26 +57,26 @@ func PhotosByLocalPath(pathToPhotos string) {
 
 			photo1, err := os.ReadFile(pathToPhoto)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 
 			photo2, err := os.ReadFile(pathToUnsortedPhoto)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 
-			fmt.Printf("calling service on %s and %s\t", pathToPhoto, pathToUnsortedPhoto)
-			faceMatchResult, err := faceService.CompareFaces(photo1, photo2)
+			log.Printf("calling service on %s and %s\t", pathToPhoto, pathToUnsortedPhoto)
+			faceMatchResult, err := ss.FaceService.CompareFaces(photo1, photo2)
 
 			if faceMatchResult.DoFacesMatch {
-				fmt.Println("matched!")
+				log.Println("matched!")
 
-				albumName := albumNameBase + strconv.Itoa(albumNameIndex)
-				albumPath := pathToPhotos + "/sorted/" + albumName
+				albumName := buildAlbumName(albumNameIndex)
+				albumPath := buildAlbumPath(pathToPhotos, albumName)
 
 				err = os.MkdirAll(albumPath, 0777)
 				if err != nil {
-					log.Fatal(err)
+					return err
 				}
 
 				matchedPhotos = append(matchedPhotos, pathToPhoto)
@@ -93,6 +99,16 @@ func PhotosByLocalPath(pathToPhotos string) {
 		}
 		albumNameIndex++
 	}
+
+	return nil
+}
+
+func buildAlbumName(albumNameIndex int) string {
+	return AlbumBaseName + strconv.Itoa(albumNameIndex)
+}
+
+func buildAlbumPath(pathToPhotos string, albumName string) string {
+	return pathToPhotos + string(os.PathSeparator) + SortedFolderName + string(os.PathSeparator) + albumName
 }
 
 func copyFile(sourcePath string, destinationPath string) {
@@ -110,4 +126,13 @@ func copyFile(sourcePath string, destinationPath string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func validatePath(path string) (*[]os.DirEntry, error) {
+	photos, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return &photos, nil
 }

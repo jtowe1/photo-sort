@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/jtowe1/photo-sort/service/faces"
 	"github.com/jtowe1/photo-sort/service/sort"
 	"log"
 	"os"
@@ -24,7 +25,19 @@ func main() {
 		log.Fatal(err)
 	}
 
-	sort.PhotosByLocalPath(pathToPhotos)
+	faceService, err := faces.NewFaceService()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	serviceSort := sort.ServiceSort{
+		FaceService: faceService,
+	}
+
+	err = serviceSort.PhotosByLocalPath(pathToPhotos)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	fmt.Printf(
 		"photos sorted and placed in %s",

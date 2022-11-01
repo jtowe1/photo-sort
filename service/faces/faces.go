@@ -6,8 +6,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/rekognition"
 	"github.com/aws/aws-sdk-go-v2/service/rekognition/types"
-	"log"
 )
+
+type FaceServiceInterface interface {
+	CompareFaces(photo1 []byte, photo2 []byte) (*FaceCompareResult, error)
+}
 
 type FaceService struct {
 	awsConfig         *aws.Config
@@ -19,7 +22,7 @@ type FaceCompareResult struct {
 	PercentMatch float32
 }
 
-func NewFaceService() FaceService {
+func NewFaceService() (*FaceService, error) {
 	//logger := logging.NewStandardLogger(os.Stdout)
 	awsConfig, err := config.LoadDefaultConfig(
 		context.TODO(),
@@ -29,7 +32,7 @@ func NewFaceService() FaceService {
 		config.WithSharedConfigProfile("personal"),
 	)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	client := rekognition.NewFromConfig(awsConfig)
 
@@ -38,7 +41,7 @@ func NewFaceService() FaceService {
 		rekognitionClient: client,
 	}
 
-	return faceService
+	return &faceService, nil
 }
 
 func (f *FaceService) CompareFaces(photo1 []byte, photo2 []byte) (*FaceCompareResult, error) {
