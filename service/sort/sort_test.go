@@ -7,14 +7,14 @@ import (
 	"testing"
 )
 
-func TestPhotosByLocalPathWithMatches(t *testing.T) {
+func TestPhotosByLocalPath(t *testing.T) {
 	t.Log("Given the need to sort a folder full of photos")
 	{
 		sort := ServiceSort{
 			FaceService: &mocks.FaceService{},
 		}
 
-		t.Log("Test when there are 2 people")
+		t.Log("Test when there are 2 people that match")
 		{
 			tempDir := t.TempDir()
 			err := os.WriteFile(tempDir+"/person1photo1.jpg", []byte("person1"), 777)
@@ -63,6 +63,35 @@ func TestPhotosByLocalPathWithMatches(t *testing.T) {
 				t.Fatal("Should have person 1 and person 2 sorted")
 			}
 		}
-	}
 
+		t.Log("Test when there are 2 people that do not match")
+		{
+			tempDir := t.TempDir()
+			err := os.WriteFile(tempDir+"/person1photo1.jpg", []byte("person1"), 777)
+			err = os.WriteFile(tempDir+"/person2photo1.jpg", []byte("person2"), 777)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = sort.PhotosByLocalPath(tempDir)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			dir, err := os.ReadDir(tempDir)
+
+			hasSortedFolder := false
+			for _, entry := range dir {
+				if strings.Contains(entry.Name(), "sorted") {
+					hasSortedFolder = true
+				}
+			}
+
+			if !hasSortedFolder {
+				t.Log("Should not have a /sorted folder")
+			} else {
+				t.Fatal("Should not have a /sorted folder")
+			}
+		}
+	}
 }
