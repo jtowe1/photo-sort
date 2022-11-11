@@ -1,7 +1,6 @@
 package sort
 
 import (
-	"fmt"
 	"github.com/jtowe1/photo-sort/service/faces"
 	"golang.org/x/exp/slices"
 	"io"
@@ -9,6 +8,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"sync"
 )
 
 const AlbumBaseName = "album"
@@ -19,6 +19,7 @@ type ServiceSort struct {
 }
 
 func (ss *ServiceSort) PhotosByLocalPath(pathToPhotos string) error {
+	var wg sync.WaitGroup
 	photos, err := validatePath(pathToPhotos)
 	if err != nil {
 		return err
@@ -85,21 +86,32 @@ func (ss *ServiceSort) PhotosByLocalPath(pathToPhotos string) error {
 				if !slices.Contains(albums[albumName], pathToPhoto) {
 					albums[albumName] = append(albums[albumName], pathToPhoto)
 					fileInfo, _ := os.Stat(pathToPhoto)
-					copyFile(pathToPhoto, albumPath+string(os.PathSeparator)+fileInfo.Name())
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+						copyFile(pathToPhoto, albumPath+string(os.PathSeparator)+fileInfo.Name())
+					}()
+
 				}
 
 				if !slices.Contains(albums[albumName], pathToUnsortedPhoto) {
 					albums[albumName] = append(albums[albumName], pathToUnsortedPhoto)
 					fileInfo, _ := os.Stat(pathToUnsortedPhoto)
-					copyFile(pathToUnsortedPhoto, albumPath+string(os.PathSeparator)+fileInfo.Name())
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+						copyFile(pathToUnsortedPhoto, albumPath+string(os.PathSeparator)+fileInfo.Name())
+					}()
+
 				}
 			} else {
-				fmt.Println("no match")
+				log.Println("no match")
 			}
 		}
 		albumNameIndex++
 	}
 
+	wg.Wait()
 	return nil
 }
 
@@ -112,6 +124,7 @@ func buildAlbumPath(pathToPhotos string, albumName string) string {
 }
 
 func copyFile(sourcePath string, destinationPath string) {
+	log.Printf("copying %s to %s\n", sourcePath, destinationPath)
 	file, err := os.Create(destinationPath)
 	if err != nil {
 		log.Fatal(err)

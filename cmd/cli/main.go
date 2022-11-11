@@ -7,6 +7,7 @@ import (
 	"github.com/jtowe1/photo-sort/service/sort"
 	"log"
 	"os"
+	"time"
 )
 
 func main() {
@@ -34,13 +35,17 @@ func main() {
 		FaceService: faceService,
 	}
 
+	now := time.Now()
 	err = serviceSort.PhotosByLocalPath(pathToPhotos)
 	if err != nil {
 		log.Fatal(err)
 	}
+	duration := time.Since(now)
 
+	fmt.Println("duration: ", duration)
 	fmt.Printf(
-		"photos sorted and placed in %s",
+		"photos sorted and placed in %s\n",
 		pathToPhotos+string(os.PathSeparator)+"sorted",
 	)
+
 }
