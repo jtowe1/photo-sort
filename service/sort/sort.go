@@ -16,6 +16,7 @@ const SortedFolderName = "sorted"
 
 type ServiceSort struct {
 	FaceService faces.FaceServiceInterface
+	DebugLog    bool
 }
 
 func (ss *ServiceSort) PhotosByLocalPath(pathToPhotos string) error {
@@ -36,7 +37,7 @@ func (ss *ServiceSort) PhotosByLocalPath(pathToPhotos string) error {
 		pathToPhoto := pathToPhotos + string(os.PathSeparator) + photo.Name()
 		ext := path.Ext(pathToPhoto)
 		if ext != ".jpg" && ext != ".jpeg" {
-			log.Printf("non jpg/jpeg detected; skipping %s\n", pathToPhoto)
+			ss.debugLogF("non jpg/jpeg detected; skipping %s\n", pathToPhoto)
 			continue
 		}
 		if slices.Contains(matchedPhotos, pathToPhoto) {
@@ -46,7 +47,7 @@ func (ss *ServiceSort) PhotosByLocalPath(pathToPhotos string) error {
 			pathToUnsortedPhoto := pathToPhotos + string(os.PathSeparator) + unsortedPhoto.Name()
 			ext := path.Ext(pathToUnsortedPhoto)
 			if ext != ".jpg" && ext != ".jpeg" {
-				log.Printf("non jpg/jpeg detected; skipping %s\n", pathToUnsortedPhoto)
+				ss.debugLogF("non jpg/jpeg detected; skipping %s\n", pathToUnsortedPhoto)
 				continue
 			}
 			if pathToUnsortedPhoto == pathToPhoto {
@@ -66,11 +67,11 @@ func (ss *ServiceSort) PhotosByLocalPath(pathToPhotos string) error {
 				return err
 			}
 
-			log.Printf("calling service on %s and %s\t", pathToPhoto, pathToUnsortedPhoto)
+			ss.debugLogF("calling service on %s and %s\t", pathToPhoto, pathToUnsortedPhoto)
 			faceMatchResult, err := ss.FaceService.CompareFaces(photo1, photo2)
 
 			if faceMatchResult.DoFacesMatch {
-				log.Println("matched!")
+				ss.debugLogF("matched!\n")
 
 				albumName := buildAlbumName(albumNameIndex)
 				albumPath := buildAlbumPath(pathToPhotos, albumName)
@@ -105,7 +106,7 @@ func (ss *ServiceSort) PhotosByLocalPath(pathToPhotos string) error {
 
 				}
 			} else {
-				log.Println("no match")
+				ss.debugLogF("no match\n")
 			}
 		}
 		albumNameIndex++
@@ -113,6 +114,12 @@ func (ss *ServiceSort) PhotosByLocalPath(pathToPhotos string) error {
 
 	wg.Wait()
 	return nil
+}
+
+func (ss *ServiceSort) debugLogF(format string, v ...any) {
+	if ss.DebugLog {
+		log.Printf(format, v...)
+	}
 }
 
 func buildAlbumName(albumNameIndex int) string {
@@ -124,7 +131,6 @@ func buildAlbumPath(pathToPhotos string, albumName string) string {
 }
 
 func copyFile(sourcePath string, destinationPath string) {
-	log.Printf("copying %s to %s\n", sourcePath, destinationPath)
 	file, err := os.Create(destinationPath)
 	if err != nil {
 		log.Fatal(err)
