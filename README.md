@@ -1,5 +1,7 @@
 # Facial Recognition Photo Sorter
 
+[![Go](https://github.com/jtowe1/photo-sort/actions/workflows/go.yml/badge.svg)](https://github.com/jtowe1/photo-sort/actions/workflows/go.yml)
+
 
 This is a command line application that takes as input the path to a folder full of photos </br>
 and sorts them into albums using facial recognition.
