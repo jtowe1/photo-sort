@@ -28,8 +28,7 @@ func NewFaceService() (*FaceService, error) {
 		context.TODO(),
 		//config.WithLogger(logger),
 		//config.WithClientLogMode(aws.LogRequest|aws.LogResponseWithBody),
-		config.WithRegion("us-east-1"),
-		config.WithSharedConfigProfile("personal"),
+		config.WithSharedConfigProfile("photo-sort"),
 	)
 	if err != nil {
 		return nil, err

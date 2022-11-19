@@ -12,12 +12,14 @@ import (
 
 func main() {
 	var pathToPhotos string
+	var debug bool
 	flag.StringVar(
 		&pathToPhotos,
 		"pathToPhotos",
 		"",
 		"The path to the photos to sort",
 	)
+	flag.BoolVar(&debug, "debug", false, "Enable debug mode")
 	flag.Parse()
 
 	_, err := os.Stat(pathToPhotos)
@@ -33,6 +35,7 @@ func main() {
 
 	serviceSort := sort.ServiceSort{
 		FaceService: faceService,
+		DebugLog:    debug,
 	}
 
 	now := time.Now()
