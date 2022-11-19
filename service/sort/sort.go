@@ -69,6 +69,9 @@ func (ss *ServiceSort) PhotosByLocalPath(pathToPhotos string) error {
 
 			ss.debugLogF("calling service on %s and %s\t", pathToPhoto, pathToUnsortedPhoto)
 			faceMatchResult, err := ss.FaceService.CompareFaces(photo1, photo2)
+			if err != nil {
+				return err
+			}
 
 			if faceMatchResult.DoFacesMatch {
 				ss.debugLogF("matched!\n")
