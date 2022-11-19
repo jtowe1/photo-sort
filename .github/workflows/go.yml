@@ -7,7 +7,7 @@ on: [push]
 
 jobs:
 
-  build:
+  checkout:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -17,8 +17,15 @@ jobs:
         with:
           go-version: 1.18
 
+  build:
+    needs: checkout
+    runs-on: ubuntu-latest
+    steps:
       - name: Build
         run: go build -v ./...
 
+  test:
+    needs: checkout
+    steps:
       - name: Test
         run: go test -v ./...
